@@ -3,10 +3,10 @@ import { withRouter } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { connect } from 'react-redux'
 import PropTypes from 'prop-types'
-import VoteScore from './VoteScore'
+import VoteScore from '../components/VoteScore'
 import { epochToString } from '../utils/helper'
 import { deletePost, updatePostVoteScore } from '../utils/api'
-import { removePost, addPost } from '../actions'
+import * as actions from './Actions'
 import { Panel, ButtonToolbar, Button, Well } from 'react-bootstrap'
 
 const Post = props => {
@@ -21,8 +21,8 @@ const Post = props => {
       <div>
         <Well>{post.body}</Well>
         {!props.details && (
-          <Button bsStyle="link" block>
-            <Link to={`/view/posts/${post.id}`}>{commentsNumber}</Link>
+          <Button className='center-block'>
+            <Link to={`/${post.category.path}/${post.id}`}>{commentsNumber}</Link>
           </Button>
         )}
         <VoteScore
@@ -39,7 +39,7 @@ const Post = props => {
         <ButtonToolbar className='pull-right'>
           <Button
             onClick={() => props.history.push({
-              pathname: `/edit/posts/${post.id}`,
+              pathname: `/posts/${post.id}`,
               state: { prevPath: props.prevPath },
             })}
           >Edit</Button>
@@ -63,18 +63,11 @@ function mapStateToProps(storeState) {
   return {}
 }
 
-function mapDispatchToProps(dispatch) {
-  return {
-    removePost: (data) => dispatch(removePost(data)),
-    addPost: (data) => dispatch(addPost(data)),
-  }
-}
-
 Post.propTypes = {
   post: PropTypes.object.isRequired,
   prevPath: PropTypes.string.isRequired,
   details: PropTypes.bool.isRequired,
 }
 
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(Post))
+export default withRouter(connect(mapStateToProps, actions)(Post))
 

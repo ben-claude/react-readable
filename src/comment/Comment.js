@@ -2,9 +2,9 @@ import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import { connect } from 'react-redux'
 import Modal from 'react-modal'
-import { addComment, removeComment } from '../actions'
+import * as actions from './Actions'
 import { modifyComment, deleteComment, updateCommentVoteScore } from '../utils/api'
-import VoteScore from './VoteScore'
+import VoteScore from '../components/VoteScore'
 import CommentForm from './CommentForm'
 import { Panel, ButtonToolbar, Button, Well } from 'react-bootstrap'
 import { epochToString } from '../utils/helper'
@@ -76,12 +76,5 @@ function mapStateToProps(storeState) {
   return {}
 }
 
-function mapDispatchToProps(dispatch) {
-  return {
-    removeComment: (data) => dispatch(removeComment(data)),
-    addComment: (data) => dispatch(addComment(data)),
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(Comment)
+export default connect(mapStateToProps, actions)(Comment)
 

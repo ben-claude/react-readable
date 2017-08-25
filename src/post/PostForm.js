@@ -3,7 +3,8 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import serializeForm from 'form-serialize'
 import { Button, FormControl, FormGroup } from 'react-bootstrap'
-import BackButton from './BackButton'
+import BackButton from '../components/BackButton'
+import FormErrors from '../components/FormErrors'
 
 class PostForm extends Component {
   static propTypes = {
@@ -28,6 +29,12 @@ class PostForm extends Component {
         author: defaultValid,
         category: defaultValid,
       },
+      formErrors: {
+        author: '',
+        title: '',
+        body: '',
+        category: '',
+      },
       formValid: false,
     }
   }
@@ -43,14 +50,20 @@ class PostForm extends Component {
     const value = e.target.value;
     this.setState({ [name]: value }, () => { this.validateField(name, value) });
   }
-  validateField = (fieldName, value) => {
+  validateField = (name, value) => {
     this.setState((state) => {
       const fieldsValid = state.fieldsValid
+      const formErrors = state.formErrors
+      const valid = value.length > 0
       return {
         fieldsValid: {
           ...fieldsValid,
-          [fieldName]: value.length > 0,
-        }
+          [name]: valid,
+        },
+        formErrors: {
+          ...formErrors,
+          [name]: valid ? '' : ' is mandatory',
+        },
       }
     }, this.validateForm);
   }
@@ -60,19 +73,23 @@ class PostForm extends Component {
       formValid: title && body && author && category
     });
   }
+  errorClass = error => (
+    error.length === 0 ? '' : 'has-error'
+  )
   render() {
     const { state } = this
     const { post } = this.props
     return (
       <div>
         <BackButton />
+        <FormErrors errors={this.state.formErrors} />
         <form onSubmit={this.handleSubmit}>
           {/*
           api.js/modifyPost() only authorize to modify title and body
           programmatically hide HTML elements by using CSS 'display' property 
           */}
           <div style={{ display: post ? 'none' : 'initial' }}>
-            <FormGroup>
+            <FormGroup className={this.errorClass(this.state.formErrors.category)}>
               <FormControl componentClass='select'
                 name='category' 
                 placeholder='Category'
@@ -85,14 +102,14 @@ class PostForm extends Component {
                 ))}
               </FormControl>
             </FormGroup>
-            <FormGroup>
+            <FormGroup className={this.errorClass(this.state.formErrors.author)}>
               <FormControl type='text' name='author' placeholder='Author' value={state.author} onChange={event => this.handleUserInput(event)}/>
             </FormGroup>
           </div>
-          <FormGroup>
+          <FormGroup className={this.errorClass(this.state.formErrors.title)}>
             <FormControl type='text' name='title' placeholder='Title' value={state.title} onChange={event => this.handleUserInput(event)}/>
           </FormGroup>
-          <FormGroup>
+          <FormGroup className={this.errorClass(this.state.formErrors.body)}>
             <FormControl componentClass='textarea' name='body' placeholder='Body' value={state.body} onChange={event => this.handleUserInput(event)}/>
           </FormGroup>
           <Button

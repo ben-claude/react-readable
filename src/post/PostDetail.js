@@ -2,14 +2,14 @@ import React, { Component } from 'react'
 import { connect } from 'react-redux'
 import Modal from 'react-modal'
 import PropTypes from 'prop-types'
-import { addComment } from '../actions'
-import { createComment } from '../utils/api'
 import { Panel, ButtonToolbar, Button } from 'react-bootstrap'
 import Post from './Post'
-import Comment from './Comment'
-import SortedList from './SortedList'
-import CommentForm from './CommentForm'
-import BackButton from './BackButton'
+import * as actions from '../comment/Actions'
+import Comment from '../comment/Comment'
+import CommentForm from '../comment/CommentForm'
+import SortedList from '../components/SortedList'
+import BackButton from '../components/BackButton'
+import { createComment } from '../utils/api'
 
 class PostDetail extends Component {
   static propTypes = {
@@ -64,11 +64,5 @@ function mapStateToProps(storeState) {
   return {}
 }
 
-function mapDispatchToProps(dispatch) {
-  return {
-    addComment: (data) => dispatch(addComment(data)),
-  }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(PostDetail)
+export default connect(mapStateToProps, actions)(PostDetail)
 

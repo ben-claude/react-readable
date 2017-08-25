@@ -1,13 +1,16 @@
 import React, { Component } from 'react'
-import { Route, withRouter } from 'react-router-dom'
+import { Switch, Route, withRouter } from 'react-router-dom'
 import { connect } from 'react-redux'
 import { getCategories, getPosts, getPostComments } from '../utils/api'
-import { addCategories, addPosts, addPost, addComments } from '../actions'
-import Posts from './Posts'
-import PostDetail from './PostDetail'
-import CreatePost from './CreatePost'
-import EditPost from './EditPost'
-import { ALL_CATEGORY } from './Categories'
+import * as categoryActions from '../category/Actions'
+import { ALL_CATEGORY } from '../category/Categories'
+import * as postActions from '../post/Actions'
+import Posts from '../post/Posts'
+import PostDetail from '../post/PostDetail'
+import CreatePost from '../post/CreatePost'
+import EditPost from '../post/EditPost'
+import * as commentActions from '../comment/Actions'
+import NotFound from '../components/NotFound'
 
 class App extends Component {
   componentDidMount() {
@@ -29,59 +32,21 @@ class App extends Component {
   render() {
     const { posts, categories, postsByPostId, categoriesByPath } = this.props
     return (
-      <div>
+      <Switch>
 
         { /* http GET /posts */ }
-        <Route exact path='/' render={routeProps => {
+        <Route exact path='/' render={routeProps => (
           // view1: Default (Root)
-          return (
             <Posts 
               posts={posts}
               prevPath={routeProps.location.pathname}
               categories={categories}
               category={ALL_CATEGORY}
             />
-          )
-        }}/>
-
-        { /* http GET /:category/posts */ }
-        <Route exact path='/view/:categoryPath/posts' render={routeProps => {
-          // view2: Category View
-          const category = categoriesByPath.get(routeProps.match.params.categoryPath)
-          if (category) {
-            return (
-              <Posts
-                posts={posts.filter(post => post.category.name === category.name)}
-                prevPath={routeProps.location.pathname}
-                categories={categories}
-                category={category.name}
-              />
-            )
-          }
-          else {
-            return <p>Category not found</p>
-          }
-        }}/>
-
-        { /* http GET /posts/:id */ }
-        <Route path='/view/posts/:postId' render={routeProps => {
-          // view3: post detail view
-          const post = postsByPostId.get(routeProps.match.params.postId)
-          if (post) {
-            return (
-              <PostDetail
-                post={post}
-                prevPath={routeProps.location.pathname}
-              />
-            )
-          }
-          else {
-            return <p>Post not found</p>
-          }
-        }}/>
+        )}/>
 
         { /* http POST /posts */ }
-        <Route exact path='/create/posts' render={routeProps => {
+        <Route exact path='/posts/create' render={routeProps => {
           // view4.1: Create post View
           /*
           'prevPath' comes from Posts.onClick / history.push()
@@ -98,7 +63,7 @@ class App extends Component {
         }}/>
 
         { /* http PUT /posts/:id */ }
-        <Route exact path='/edit/posts/:postId' render={routeProps => {
+        <Route path='/posts/:postId' render={routeProps => {
           // view4.2: Edit post View
           const post = postsByPostId.get(routeProps.match.params.postId)
           if (post) {
@@ -114,48 +79,77 @@ class App extends Component {
             )
           }
           else {
-            return <p>Post not found</p>
+            return <NotFound />
           }
         }}/>
 
-      </div>
+        { /* http GET /:category/posts */ }
+        <Route exact path='/:categoryPath' render={routeProps => {
+          // view2: Category View
+          const category = categoriesByPath.get(routeProps.match.params.categoryPath)
+          if (category) {
+            return (
+              <Posts
+                posts={posts.filter(post => post.category.name === category.name)}
+                prevPath={routeProps.location.pathname}
+                categories={categories}
+                category={category.name}
+              />
+            )
+          }
+          else {
+            return <NotFound />
+          }
+        }}/>
+
+        { /* http GET /posts/:id */ }
+        <Route exact path='/:categoryPath/:postId' render={routeProps => {
+          // view3: post detail view
+          const post = postsByPostId.get(routeProps.match.params.postId)
+          if (post) {
+            return (
+              <PostDetail
+                post={post}
+                prevPath={routeProps.location.pathname}
+              />
+            )
+          }
+          else {
+            return <NotFound />
+          }
+        }}/>
+
+        <Route component={NotFound}/>
+
+      </Switch>
     )
   }
 }
 
 // map our "normalized" redux store into "structured" props
-function mapStateToProps(storeState) {
-  const categoriesByName = storeState.categories.reduce((accum, c) => (
+function mapStateToProps({ categories, posts, comments }) {
+  const categoriesByName = categories.reduce((accum, c) => (
     accum.set(c.name, c)
   ), new Map())
-  const posts = storeState.posts.map(p => {
+  const enrichedPosts = posts.map(p => {
     const category = categoriesByName.get(p.category)
     return {
       ...p,
       // enrich post object with the associated comments:
-      comments: storeState.comments.filter(c => c.parentId === p.id),
+      comments: comments.filter(c => c.parentId === p.id),
       // replace category string property with a category object:
       category: category ? category : { name: '', path: '' },
     }
   })
   return {
-    categories: storeState.categories,
-    categoriesByPath: storeState.categories.reduce((accum, c) => (
+    categories,
+    categoriesByPath: categories.reduce((accum, c) => (
       accum.set(c.path, c)
     ), new Map()),
-    posts,
-    postsByPostId: posts.reduce((accum, p) => (
+    posts: enrichedPosts,
+    postsByPostId: enrichedPosts.reduce((accum, p) => (
       accum.set(p.id, p)
     ), new Map()),
-  }
-}
-
-function mapDispatchToProps(dispatch) {
-  return {
-    addCategories: (data) => dispatch(addCategories(data)),
-    addPosts: (data) => dispatch(addPosts(data)),
-    addComments: (data) => dispatch(addComments(data)),
-    addPost: (data) => dispatch(addPost(data)),
   }
 }
 
@@ -163,5 +157,5 @@ function mapDispatchToProps(dispatch) {
 withRouter() is needed for the <Route> to work correctly (even if the history is not used in App component)
 see https://github.com/ReactTraining/react-router/issues/4671
 */
-export default withRouter(connect(mapStateToProps, mapDispatchToProps)(App))
+export default withRouter(connect(mapStateToProps, { ...categoryActions, ...postActions, ...commentActions })(App))
 

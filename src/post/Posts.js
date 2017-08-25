@@ -3,8 +3,8 @@ import { withRouter } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { Panel, ButtonToolbar, Button } from 'react-bootstrap'
 import Post from './Post'
-import SortedList from './SortedList'
-import Categories from './Categories'
+import SortedList from '../components/SortedList'
+import Categories from '../category/Categories'
 
 const Posts = props => {
   const renderPost = (post) => (
@@ -17,7 +17,7 @@ const Posts = props => {
         <SortedList label='Posts' items={props.posts} renderItem={renderPost} />
         <ButtonToolbar>
           <Button block onClick={() => props.history.push({
-            pathname: '/create/posts',
+            pathname: '/posts/create',
             state: { prevPath: props.prevPath },
           })}
         >Add post</Button>

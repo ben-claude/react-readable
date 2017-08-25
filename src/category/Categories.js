@@ -17,7 +17,7 @@ class Categories extends Component {
     const allCategories = [ { name: ALL_CATEGORY, path: '/' } ].concat(this.props.categories.map(category => {
       return { 
         name: category.name,
-        path: `/view/${category.path}/posts`
+        path: `/${category.path}`
       }
     }))
     const onChange = e => {
